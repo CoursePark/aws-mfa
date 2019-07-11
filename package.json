@@ -1,0 +1,34 @@
+{
+  "name": "aws-mfa-session",
+  "version": "0.1.0",
+  "description": "Generate MFA session credentials for 'aws-cli'.",
+  "author": "Jared Abbott",
+  "homepage": "https://github.com/CoursePark/aws-mfa-session#readme",
+  "license": "MIT",
+  "main": "aws-mfa-session.sh",
+  "bin": {
+    "aws-mfa-session": "./aws-mfa-session.sh"
+  },
+  "bugs": {
+    "url": "https://github.com/CoursePark/aws-mfa-session/issues"
+  },
+  "files": [
+    "aws-mfa-session.sh",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "aws",
+    "cli",
+    "mfa"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CoursePark/aws-mfa-session.git"
+  },
+  "scripts": {
+    "lint:sh": "./lint.sh --sh",
+    "lint:yml": "./lint.sh --yml",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
