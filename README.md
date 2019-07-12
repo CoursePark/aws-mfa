@@ -6,6 +6,10 @@
 
 Generate MFA session credentials for `aws-cli`.
 
+## Install
+
+    npm i aws-mfa-session
+
 ## Usage
 
 The `aws-mfa-session` script requires that the AWS role credentials are set in the shell environment or in the `~/.aws/credentials` file.
