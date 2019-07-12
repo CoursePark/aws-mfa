@@ -3,6 +3,10 @@
 ################################################################
 # Define AWS variables
 ################################################################
+
+# Create the AWS session credentials directory
+mkdir -p /tmp/.aws
+
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
 AWS_MFA_DEVICE_ARN=${AWS_MFA_DEVICE_ARN:-}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
@@ -51,9 +55,6 @@ else
         --token-code "${AWS_MFA_SECURITY_CODE}"\
         --output text \
     )
-
-    # Create the AWS session credentials directory
-    mkdir -p /tmp/.aws
 
     printf '%s\n' "${AWS_SESSION_CREDENTIALS}" | tee /tmp/.aws/session-credentials >/dev/null 2>&1
     printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."

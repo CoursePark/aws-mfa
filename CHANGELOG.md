@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.1](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.1) - 2019-07-12
 ### Fixed
-- Ensure that `/tmp/.aws/session-credentials` exists
+- Ensure that the `/tmp/.aws/session-credentials` file exists
 
 ---
 
