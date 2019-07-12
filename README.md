@@ -34,7 +34,7 @@ Method B) Set the AWS role credentials and call `/path/to/aws-mfa-session.sh` fr
     $ AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> && \
       AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> && \
       AWS_MFA_DEVICE_ARN=<AWS_MFA_DEVICE_ARN> && \
-      /path/to/aws-mfa-session.sh
+      . /path/to/aws-mfa-session.sh
 
 ### Notes
 
