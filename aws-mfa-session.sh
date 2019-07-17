@@ -4,9 +4,9 @@
 # Define AWS variables
 ################################################################
 
-# Create the AWS session credentials directory
-aws_config_path="${HOME}"/.aws
-mkdir -p "${aws_config_path}"
+# The AWS session credentials directory
+aws_session_path="${HOME}"/.aws
+mkdir -p "${aws_session_path}"
 
 # Imported
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
@@ -15,16 +15,24 @@ AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
 
 # Local
-aws_session_credentials=$(touch "${aws_config_path}"/session-credentials; cat "${aws_config_path}"/session-credentials)
+aws_session_credentials=$(touch "${aws_session_path}"/session-credentials; cat "${aws_session_path}"/session-credentials)
 aws_session_duration=86400
 aws_session_expiry_date="$(echo "${aws_session_credentials}" | awk '{ print $3 }')"
 
 ################################################################
 # Fetch and cache AWS session credentials
 ################################################################
-if [ -n "${aws_session_expiry_date}" ] && [ "$(date +%s)" -lt "$(date -d "${aws_session_expiry_date}" +%s)" ]; then
+platform=$(uname -s)
+
+if [ -z "${platform##*'Darwin'*}" ]; then
+    aws_session_epoch_expiry_date=$(date -j -f "%Y-%m-%d %H:%M" "${aws_session_expiry_date}" +%s)
+else
+    aws_session_epoch_expiry_date=$(date -d "${aws_session_expiry_date}" +%s)
+fi
+
+if [ -n "${aws_session_expiry_date}" ] && [ "$(date +%s)" -lt "${aws_session_epoch_expiry_date}" ]; then
     printf '%s\n' "> Looking for AWS session credentials...";
-    printf '%s\n' "    Using the credentials found in \"${aws_config_path}/session-credentials\"";
+    printf '%s\n' "    Using the credentials found in \"${aws_session_path}/session-credentials\"";
 else
     printf '%s\n' ""
 
@@ -60,9 +68,9 @@ else
         --output text \
     )
 
-    printf '%s\n' "${aws_session_credentials}" | tee "${aws_config_path}"/session-credentials >/dev/null 2>&1
+    printf '%s\n' "${aws_session_credentials}" | tee "${aws_session_path}"/session-credentials >/dev/null 2>&1
     
-    if [ -s "${aws_config_path}"/session-credentials ]; then
+    if [ -s "${aws_session_path}"/session-credentials ]; then
         printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."
     else
         printf '%s\n' "    Something went wrong. Please check your credentials and try again."
