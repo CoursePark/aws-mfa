@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.1.3](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.3) - 2019-07-17
+### Changed
+- Use the correct letter case for variables
+
+### Fixed
+- Exit the script when AWS session credentials are empty
+- Properly handle success and fail messages
+- Replace `/tmp` with `/home/<user>` for safer credential storage
+- Use the correct `date` command for macOS
+
+---
+
 ## [0.1.2](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.2) - 2019-07-12
 ### Added
 - Documentation
