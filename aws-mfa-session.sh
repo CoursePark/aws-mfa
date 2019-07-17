@@ -5,7 +5,8 @@
 ################################################################
 
 # Create the AWS session credentials directory
-mkdir -p /tmp/.aws
+aws_config_path="${HOME}"/.aws
+mkdir -p "${aws_config_path}"
 
 # Imported
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
@@ -14,7 +15,7 @@ AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
 
 # Local
-aws_session_credentials=$(touch /tmp/.aws/session-credentials; cat /tmp/.aws/session-credentials)
+aws_session_credentials=$(touch "${aws_config_path}"/session-credentials; cat "${aws_config_path}"/session-credentials)
 aws_session_duration=86400
 aws_session_expiry_date="$(echo "${aws_session_credentials}" | awk '{ print $3 }')"
 
@@ -23,7 +24,7 @@ aws_session_expiry_date="$(echo "${aws_session_credentials}" | awk '{ print $3 }
 ################################################################
 if [ -n "${aws_session_expiry_date}" ] && [ "$(date +%s)" -lt "$(date -d "${aws_session_expiry_date}" +%s)" ]; then
     printf '%s\n' "> Looking for AWS session credentials...";
-    printf '%s\n' "    Using the credentials found in \"/tmp/.aws/session-credentials\"";
+    printf '%s\n' "    Using the credentials found in \"${aws_config_path}/session-credentials\"";
 else
     printf '%s\n' ""
 
@@ -59,7 +60,7 @@ else
         --output text \
     )
 
-    printf '%s\n' "${aws_session_credentials}" | tee /tmp/.aws/session-credentials >/dev/null 2>&1
+    printf '%s\n' "${aws_session_credentials}" | tee "${aws_config_path}"/session-credentials >/dev/null 2>&1
     printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."
 fi
 
