@@ -61,7 +61,12 @@ else
     )
 
     printf '%s\n' "${aws_session_credentials}" | tee "${aws_config_path}"/session-credentials >/dev/null 2>&1
-    printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."
+    
+    if [ -s "${aws_config_path}"/session-credentials ]; then
+        printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."
+    else
+        printf '%s\n' "    Something went wrong. Please check your credentials and try again."
+    fi
 fi
 
 # Set the AWS MFA credential variables
