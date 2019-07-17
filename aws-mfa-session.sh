@@ -4,10 +4,6 @@
 # Define AWS variables
 ################################################################
 
-# The AWS session credentials directory
-aws_session_path="${HOME}"/.aws
-mkdir -p "${aws_session_path}"
-
 # Imported
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
 AWS_MFA_DEVICE_ARN=${AWS_MFA_DEVICE_ARN:-}
@@ -15,6 +11,9 @@ AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
 
 # Local
+aws_session_path="${HOME}"/.aws
+mkdir -p "${aws_session_path}"
+
 aws_session_credentials=$(touch "${aws_session_path}"/session-credentials; cat "${aws_session_path}"/session-credentials)
 aws_session_duration=86400
 aws_session_expiry_date="$(echo "${aws_session_credentials}" | awk '{ print $3 }')"
