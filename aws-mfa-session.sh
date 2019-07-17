@@ -73,6 +73,7 @@ else
         printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."
     else
         printf '%s\n' "    Something went wrong. Please check your credentials and try again."
+        exit 1
     fi
 fi
 
