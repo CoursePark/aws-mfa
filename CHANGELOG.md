@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.1.4](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.4) - 2019-07-18
+### Fixed
+- Properly handle the expiry date
+
+---
+
 ## [0.1.3](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.3) - 2019-07-17
 ### Changed
 - Use the correct letter case for variables
