@@ -12,7 +12,7 @@ Generate MFA session credentials for `aws-cli`.
 
 ## Usage
 
-The `aws-mfa-session` script requires that the AWS role credentials are set in the shell environment or in the `~/.aws/credentials` file.
+The `aws-mfa-session` script requires that the AWS role credentials are set in the shell environment or in the `/home/<USER>/.aws/credentials` file.
 
     $AWS_ACCESS_KEY_ID
     $AWS_SECRET_ACCESS_KEY
@@ -38,5 +38,5 @@ Method B) Set the AWS role credentials and call `/path/to/aws-mfa-session.sh` fr
 
 ### Notes
 
-- The session credentials will be stored in `/tmp/.aws/session-credentials`.
+- The session credentials will be stored in `/home/<USER>/.aws/session-credentials`.
 - The MFA security code can also be passed as an argument to `aws-mfa-session.sh`.
