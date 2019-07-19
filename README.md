@@ -17,9 +17,9 @@ The `aws-mfa-session` script requires that the AWS role credentials are set in t
     $AWS_ACCESS_KEY_ID
     $AWS_SECRET_ACCESS_KEY
 
-The MFA device ARN identifier must be set in the shell environment.
+The `ARN` of the AWS IAM role must be set in the shell environment.
 
-    $AWS_MFA_DEVICE_ARN
+    $AWS_IAM_ROLE_DEVICE_ARN
 
 Method A) Source the `aws-mfa-session.sh` file in your script before you make any AWS calls.
 
@@ -33,7 +33,7 @@ Method B) Set the AWS role credentials and call `/path/to/aws-mfa-session.sh` fr
 
     $ AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> && \
       AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> && \
-      AWS_MFA_DEVICE_ARN=<AWS_MFA_DEVICE_ARN> && \
+      AWS_IAM_ROLE_DEVICE_ARN=<AWS_IAM_ROLE_DEVICE_ARN> && \
       . /path/to/aws-mfa-session.sh
 
 ### Notes
