@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.0.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/v1.0.0) - 2019-07-19
+### Added
+- Documentation
+- Support for AWS IAM roles
+
+---
+
 ## [0.1.4](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.4) - 2019-07-18
 ### Fixed
 - Properly handle the expiry date
