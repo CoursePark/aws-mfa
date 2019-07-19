@@ -31,6 +31,7 @@ A good bug report should contain some or all of the following information:
 
 ### Use semantic commit messages
 
+- `bump`: Version updates.
 - `ci`: Changes to the CI files.
 - `doc`: Changes to the documentation.
 - `feat`: Add new behaviour to the code.
