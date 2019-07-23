@@ -12,29 +12,89 @@ Generate MFA session credentials for `aws-cli`.
 
 ## Usage
 
-The `aws-mfa-session` script requires that the AWS role credentials are set in the shell environment or in the `/home/<USER>/.aws/credentials` file.
+### Flags
 
-    $AWS_ACCESS_KEY_ID
-    $AWS_SECRET_ACCESS_KEY
+- `/path/to/aws-mfa-session.sh -p <PROFILE_NAME> -r <ROLE_ARN> -c <CLI_CMD>`
 
-The `ARN` of the AWS IAM role must be set in the shell environment.
+      - `[ -c | --cli ]`: This flag is for passing 'aws' commands
+      - `[ -p | --profile ]`: This flag is for passing a profile name
+      - `[ -r | --role-arn ]`: This flag is for passing the role ARN
+      - `[ -t | --token-code ]`: This flag is for passing an MFA token code
 
-    $AWS_IAM_ROLE_DEVICE_ARN
+### Environment variables
 
-Method A) Source the `aws-mfa-session.sh` file in your script before you make any AWS calls.
+- The values assigned to environment variables take precedence over the values passed with flags and the values found in `/home/<USER>/.aws/credentials`.
+- The `aws-mfa-session` script can be configured via the following environment variables.
 
-    #!/usr/bin/env sh
+      $AWS_ACCESS_KEY_ID
+      $AWS_PROFILE_NAME
+      $AWS_ROLE_ARN
+      $AWS_SECRET_ACCESS_KEY
 
-    . /path/to/aws-mfa-session.sh
+### The `aws-mfa-session` script
 
-    # `aws-cli` commands...
+#### A. Configure the script via environment variables.
 
-Method B) Set the AWS role credentials and call `/path/to/aws-mfa-session.sh` from the command line.
+- Source the script.
 
-    $ AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> && \
-      AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> && \
-      AWS_IAM_ROLE_DEVICE_ARN=<AWS_IAM_ROLE_DEVICE_ARN> && \
+      #!/usr/bin/env sh
+
+      AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
+      export AWS_ACCESS_KEY_ID
+
+      AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
+      export AWS_SECRET_ACCESS_KEY
+    
+      AWS_ROLE_ARN=<AWS_ROLE_ARN>
+      export AWS_ROLE_ARN
+
+      # Profiles are optional
+      AWS_PROFILE_NAME='<aws_profile_name>'
+      export AWS_PROFILE_NAME
+
+      # Generate the session credentials
       . /path/to/aws-mfa-session.sh
+
+      # `aws-cli` commands go here...
+
+- Call the script via the command line.
+
+      $ AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> && \
+      AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> && \
+      AWS_ROLE_ARN=<AWS_ROLE_ARN>
+
+      $ /path/to/aws-mfa-session.sh ...
+
+#### B. Use the credentials and config found in `/home/<USER>/.aws`.
+
+- `/home/<USER>/.aws/credentials`
+
+      [default]
+      aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+      aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+      [<credentials_profile_name>]
+      aws_access_key_id = AKIAIOSHSWBG7EXAMPLE
+      aws_secret_access_key = wJalrXUtnRYBQ/K7MTONJ/bPxRfiCYEXAMPLEKEY
+
+- `/home/<USER>/.aws/config`
+
+      [default]
+      output = json
+      region = ca-central-1
+
+      [profile <source_profile_name>]
+      region = ca-central-1
+
+      [profile <credentials_profile_name>]
+      role_arn = arn:aws:iam::xxxxxxxxxxxx:role/<ROLE_NAME>
+      source_profile = <source_profile_name>
+
+- Pass the `profile` flag to the script.
+
+      $ /path/to/aws-mfa-session.sh \
+        -p <profile_name> \
+        -c 'aws ...'
 
 ### Notes
 
