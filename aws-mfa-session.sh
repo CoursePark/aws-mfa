@@ -10,7 +10,7 @@ AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
 
 # Local
-aws_iam_user_device_arn=$(aws sts get-caller-identity --output text --query 'Arn' | sed -r 's|:user|:mfa|g')
+aws_iam_user_device_arn=$(aws sts get-caller-identity --output text --query 'Arn' | sed 's|:user|:mfa|g')
 
 aws_session_path="${HOME}"/.aws
 mkdir -p "${aws_session_path}"
