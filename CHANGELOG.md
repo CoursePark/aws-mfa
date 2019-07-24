@@ -3,20 +3,38 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [1.0.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/v1.0.0) - 2019-07-19
+## [2.0.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/2.0.0) - 2019-07-24
+### Added
+- Add the 'cli' flag for passing 'aws' commands
+- Add the 'profile' flag for passing a profile name
+- Add the 'role-arn' flag for passing the role ARN
+- Add the 'token-code' flag for passing an MFA token code
+- Fallback to credentials found in '/home/<USER>/.aws'
+
+#### Changed
+- Environment variable names
+- Update the 'usage' section of `README` file
+
+### Fixed
+- Remove the '-r' flag from 'sed' command (macOS: illegal option)
+- Fail if the exit code for the `assume-role` command is not equal to `0`
+
+---
+
+## [1.0.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/1.0.0) - 2019-07-19
 ### Added
 - Documentation
 - Support for AWS IAM roles
 
 ---
 
-## [0.1.4](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.4) - 2019-07-18
+## [0.1.4](https://github.com/CoursePark/aws-mfa-session/releases/tag/0.1.4) - 2019-07-18
 ### Fixed
 - Properly handle the expiry date
 
 ---
 
-## [0.1.3](https://github.com/CoursePark/aws-mfa-session/releases/tag/v0.1.3) - 2019-07-17
+## [0.1.3](https://github.com/CoursePark/aws-mfa-session/releases/tag/0.1.3) - 2019-07-17
 ### Changed
 - Use the correct letter case for variables
 
