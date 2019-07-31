@@ -103,9 +103,9 @@ if [ -n "${aws_session_expiry_date}" ]; then
     platform=$(uname -s)
 
     if [ -z "${platform##*'Darwin'*}" ]; then
-        # 'date' will fail on macOS if the timestamp contains a '[A-z]' characters
+        # 'date' will fail on macOS if the timestamp contains '[A-z]' characters
         # In this case, the '[A-z]' characters are removed with '%?' and 'sed'
-        aws_session_epoch_expiry_date=$(date -j -f "%Y-%m-%d %H:%M" "${aws_session_expiry_date%?}" +%s | sed 's|T| |g')
+        aws_session_epoch_expiry_date=$(date -j -f "%Y-%m-%d %H:%M" "$(echo "${aws_session_expiry_date%?}" | sed 's|T| |g')" +%s)
     else
         aws_session_epoch_expiry_date=$(date -d "${aws_session_expiry_date}" +%s)
     fi
