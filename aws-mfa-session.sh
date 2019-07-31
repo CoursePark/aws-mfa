@@ -96,6 +96,16 @@ aws_role_session_credentials=$(\
 aws_session_duration=86400
 aws_session_expiry_date="$(echo "${aws_role_session_credentials}" | awk '{ print $3 }')"
 
+export_aws_credentials(){
+    AWS_ACCESS_KEY_ID="$(echo "${1}" | awk '{ print $2 }')"
+    AWS_SECRET_ACCESS_KEY="$(echo "${1}" | awk '{ print $4 }')"
+    AWS_SESSION_TOKEN="$(echo "${1}" | awk '{ print $5 }')"
+
+    export AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY
+    export AWS_SESSION_TOKEN
+}
+
 ################################################################
 # Fetch and cache AWS session credentials
 ################################################################
@@ -151,15 +161,7 @@ else
         --output text \
     )
 
-    # Set the AWS MFA credential variables
-    AWS_ACCESS_KEY_ID="$(echo "${aws_user_session_credentials}" | awk '{ print $2 }')"
-    AWS_SECRET_ACCESS_KEY="$(echo "${aws_user_session_credentials}" | awk '{ print $4 }')"
-    AWS_SESSION_TOKEN="$(echo "${aws_user_session_credentials}" | awk '{ print $5 }')"
-
-    export AWS_ACCESS_KEY_ID
-    export AWS_SECRET_ACCESS_KEY
-    export AWS_SESSION_TOKEN
-
+    export_aws_credentials "${aws_user_session_credentials}"
     session_id=$(date +%s)
 
     # Generate role session credentials
@@ -183,14 +185,7 @@ else
     fi
 fi
 
-# Set the AWS role credential variables
-AWS_ACCESS_KEY_ID="$(echo "${aws_role_session_credentials}" | awk '{ print $2 }')"
-AWS_SECRET_ACCESS_KEY="$(echo "${aws_role_session_credentials}" | awk '{ print $4 }')"
-AWS_SESSION_TOKEN="$(echo "${aws_role_session_credentials}" | awk '{ print $5 }')"
-
-export AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY
-export AWS_SESSION_TOKEN
+export_aws_credentials "${aws_role_session_credentials}"
 
 # Run 'aws' commands
 if [ -z "${aws_run_cli##*'aws'*}" ]; then
