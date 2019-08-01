@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.0.1](https://github.com/CoursePark/aws-mfa-session/releases/tag/2.0.1) - 2019-08-01
+## Changed
+- Refactor to make use of the 'export_aws_credentials' function
+
+### Fixed
+- Use command substitution to properly parse '$aws_session_expiry_date' (macOS)
+
+---
+
 ## [2.0.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/2.0.0) - 2019-07-24
 ### Added
 - Add the 'cli' flag for passing 'aws' commands
