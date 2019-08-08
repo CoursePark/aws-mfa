@@ -1,10 +1,50 @@
 #!/usr/bin/env sh
 
-################################################################
-# Define AWS variables
-################################################################
+################################################################################
+# Define variables
+################################################################################
+script_is_sourced=0
+
+if [ -n "$BASH_VERSION" ]; then
+    (return 0 2>/dev/null) && script_is_sourced=1
+elif [ -n "$ZSH_EVAL_CONTEXT" ]; then
+    case $ZSH_EVAL_CONTEXT in *:file) script_is_sourced=1;; esac
+else
+    case ${0##*/} in dash|sh) script_is_sourced=1;; esac
+fi
+
+aws_role_name="${AWS_ROLE_NAME:-}"
+aws_profile_name="${AWS_PROFILE_NAME:-'default'}"
+aws_role_arn="${AWS_ROLE_ARN:-}"
+aws_mfa_session_duration="${AWS_MFA_SESSION_DURATION:-86400}"
+aws_session_path="${HOME}"/.aws
+
+aws_session_epoch_expiry_date=''
+aws_mfa_session_credentials=''
+aws_role_session_credentials=''
+
+profile_not_found="Profile name not found."
+role_not_found="Role ARN or name not found."
+something_went_wrong="    Something went wrong. Please check your credentials and try again."
+
+################################################################################
+# Handle arguments
+################################################################################
 for arg in "$@"; do
-    # Run 'aws' commands
+    # Assume a role
+    # [ -a | --assume-role ]
+    if [ -z "${AWS_ROLE_NAME}" ]; then
+        if [ -n "${aws_role_name_flag}" ]; then
+            aws_role_name_flag=''
+            aws_role_name="${arg}"
+        fi
+
+        if [ "${arg}" = "-a" ] || [ "${arg}" = "--assume-role" ]; then
+            aws_role_name_flag=true
+        fi
+    fi
+
+    # For running AWS CLI commands inside of this script
     # [ -c | --cli ]
     if [ -n "${aws_run_cli_flag}" ]; then
         aws_run_cli_flag=''
@@ -13,6 +53,19 @@ for arg in "$@"; do
 
     if [ "${arg}" = "-c" ] || [ "${arg}" = "--cli" ]; then
         aws_run_cli_flag=true
+    fi
+
+    # Set the MFA session duration
+    # [ -d | --duration ]
+    if [ -z "${AWS_MFA_SESSION_DURATION}" ]; then
+        if [ -n "${aws_mfa_session_duration_flag}" ]; then
+            aws_mfa_session_duration_flag=''
+            aws_mfa_session_duration="${arg}"
+        fi
+
+        if [ "${arg}" = "-d" ] || [ "${arg}" = "--duration" ]; then
+            aws_mfa_session_duration_flag=true
+        fi
     fi
 
     # Specify a profile name
@@ -55,79 +108,137 @@ for arg in "$@"; do
     fi
 done
 
-if [ -n "${AWS_PROFILE_NAME}" ]; then
-    aws_profile_name="${AWS_PROFILE_NAME}"
-fi
+################################################################################
+# Define internal functions
+################################################################################
+configure_aws_credentials(){
+    if [ -n "${1}" ]; then
+        # Set the credentials
+        AWS_ACCESS_KEY_ID="$(echo "${1}" | awk '{ print $2 }')"
+        AWS_SECRET_ACCESS_KEY="$(echo "${1}" | awk '{ print $4 }')"
+        AWS_SESSION_TOKEN="$(echo "${1}" | awk '{ print $5 }')"
 
-if [ -z "${AWS_ACCESS_KEY_ID}" ]; then
-    [ -n "${aws_profile_name}" ] && \
-        AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile "${aws_profile_name}") || \
-        AWS_ACCESS_KEY_ID=$(aws configure get default.aws_access_key_id)
-
-    export AWS_ACCESS_KEY_ID
-fi
-
-if [ -z "${AWS_SECRET_ACCESS_KEY}" ]; then
-    [ -n "${aws_profile_name}" ] && \
-        AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile "${aws_profile_name}") || \
-        AWS_SECRET_ACCESS_KEY=$(aws configure get default.aws_secret_access_key)
-
-    export AWS_SECRET_ACCESS_KEY
-fi
-
-if [ -z "${AWS_ROLE_ARN}" ] && [ -z "${aws_role_arn}" ]; then
-    [ -n "${aws_profile_name}" ] && \
-        aws_role_arn=$(aws configure get role_arn --profile "${aws_profile_name}") || \
-        aws_role_arn=$(aws configure get default.role_arn)
-elif [ -n "${AWS_ROLE_ARN}" ]; then
-    aws_role_arn="${AWS_ROLE_ARN}"
-fi
-
-aws_user_arn=$(aws sts get-caller-identity --output text --query 'Arn' | sed 's|:user|:mfa|g')
-
-aws_session_path="${HOME}"/.aws
-mkdir -p "${aws_session_path}"
-
-aws_role_session_credentials=$(\
-    touch "${aws_session_path}"/session-credentials;\
-    cat "${aws_session_path}"/session-credentials\
-)
-
-aws_session_duration=86400
-aws_session_expiry_date="$(echo "${aws_role_session_credentials}" | awk '{ print $3 }')"
-
-export_aws_credentials(){
-    AWS_ACCESS_KEY_ID="$(echo "${1}" | awk '{ print $2 }')"
-    AWS_SECRET_ACCESS_KEY="$(echo "${1}" | awk '{ print $4 }')"
-    AWS_SESSION_TOKEN="$(echo "${1}" | awk '{ print $5 }')"
+        # Cache the credentials
+        # If '$aws_role_name' isn't set, this function
+        # won't write to the '~/.aws/credentials' file
+        if [ -n "${2}" ]; then
+            aws --profile "${2}" configure set aws_access_key_id "${AWS_ACCESS_KEY_ID}"
+            aws --profile "${2}" configure set aws_secret_access_key "${AWS_SECRET_ACCESS_KEY}"
+            aws --profile "${2}" configure set aws_session_token "${AWS_SESSION_TOKEN}"
+        fi
+    elif [ -n "${2}" ]; then
+        # Attempt to fetch cached credentials
+        AWS_ACCESS_KEY_ID=$(aws --profile "${2}" configure get aws_access_key_id)
+        AWS_SECRET_ACCESS_KEY=$(aws --profile "${2}" configure get aws_secret_access_key)
+        AWS_SESSION_TOKEN=$(aws --profile "${2}" configure get aws_session_token)
+    else
+        printf '%s\n' "${something_went_wrong}"
+        exit 127
+    fi
 
     export AWS_ACCESS_KEY_ID
     export AWS_SECRET_ACCESS_KEY
     export AWS_SESSION_TOKEN
 }
 
-################################################################
-# Fetch and cache AWS session credentials
-################################################################
-if [ -n "${aws_session_expiry_date}" ]; then
-    platform=$(uname -s)
-
-    if [ -z "${platform##*'Darwin'*}" ]; then
-        # 'date' will fail on macOS if the timestamp contains '[A-z]' characters
-        # In this case, the '[A-z]' characters are removed with '%?' and 'sed'
-        aws_session_epoch_expiry_date=$(date -j -f "%Y-%m-%d %H:%M" "$(echo "${aws_session_expiry_date%?}" | sed 's|T| |g')" +%s)
-    else
-        aws_session_epoch_expiry_date=$(date -d "${aws_session_expiry_date}" +%s)
+generate_aws_mfa_session_credentials(){
+    if [ -z "${aws_profile_name}" ]; then
+        printf '%s\n' "${profile_not_found}"
+        exit 127
     fi
-fi
 
-if [ -n "${aws_session_expiry_date}" ] && [ "$(date +%s)" -lt "${aws_session_epoch_expiry_date}" ]; then
-    printf '%s\n' "> Looking for AWS session credentials...";
-    printf '%s\n' "    Using the credentials found in \"${aws_session_path}/session-credentials\"";
-else
-    printf '%s\n' ""
+    request_token_code
 
-    # Require an AWS MFA code
+    aws_mfa_arn=$(aws --profile "${aws_profile_name}" sts get-caller-identity --output text --query 'Arn' | sed 's|:user|:mfa|g')
+    aws_session_epoch_expiry_date=$(( $(date +%s) + aws_mfa_session_duration ))
+
+    printf '%s\n' "    Acquiring the MFA session credentials: \"aws sts get-session-token --duration ${aws_mfa_session_duration} --serial-number ${aws_mfa_arn} --token-code ${aws_token_code}\"";
+
+    aws_mfa_session_credentials=$(\
+        aws \
+        --profile "${aws_profile_name}" \
+        sts get-session-token \
+        --duration "${aws_mfa_session_duration}" \
+        --serial-number "${aws_mfa_arn}" \
+        --token-code "${aws_token_code}" \
+        --output text \
+    )
+
+    aws_mfa_session_credentials_exit_code="${?}"
+
+    if [ "${aws_mfa_session_credentials_exit_code}" = '0' ]; then
+        configure_aws_credentials "${aws_mfa_session_credentials}" "${aws_profile_name}-mfa-session"
+        aws --profile "${aws_profile_name}-mfa-session" configure set session_expiry_date "$aws_session_epoch_expiry_date"
+        aws_mfa_session_duration_hours=$((aws_mfa_session_duration/3600))
+        printf '%s\n' "    The '${aws_profile_name}-mfa-session' credentials have been set and will be valid for ${aws_mfa_session_duration_hours} hour(s)."
+    else
+        printf '%s\n' "${something_went_wrong}"
+        exit "${aws_mfa_session_credentials_exit_code}"
+    fi
+}
+
+generate_aws_role_session_credentials(){
+    if [ -z "${aws_profile_name}" ]; then
+        printf '%s\n' "${profile_not_found}"
+        exit 127
+    fi
+
+    if [ -n "${aws_role_name}" ]; then
+        aws_role_arn_or_name="${aws_role_name}"
+
+        if [ -z "${AWS_ROLE_ARN}" ] && [ -z "${aws_role_arn}" ]; then
+            aws_role_arn=$(aws --profile "${aws_role_name}" configure get role_arn)
+        fi
+
+        aws --profile "${aws_role_name}" configure set source_profile "${aws_profile_name}-mfa-session"
+    elif [ -n "${aws_role_arn}" ]; then
+        aws_role_arn_or_name="${aws_role_arn}"
+    else
+        printf '%s\n' "${role_not_found}"
+        exit 127
+    fi
+
+    printf '\n%s\n' "    Acquiring the 'assume-role' session credentials: \"aws --profile ${aws_profile_name} sts assume-role --role-arn ${aws_role_arn} --role-session-name aws_mfa_session_${aws_session_epoch_expiry_date}\"";
+
+    aws_role_session_credentials=$(\
+        aws \
+        --profile "${aws_profile_name}" \
+        sts assume-role \
+        --role-arn "${aws_role_arn}" \
+        --role-session-name "aws_mfa_session_${aws_session_epoch_expiry_date}" \
+        --output text | \
+        grep "^CREDENTIALS"\
+    )
+
+    aws_role_session_credentials_exit_code="${?}"
+
+    if [ "${aws_role_session_credentials_exit_code}" = '0' ]; then
+        configure_aws_credentials "${aws_role_session_credentials}" "${aws_role_name}"
+        printf '%s\n' "    The '${aws_role_arn_or_name}' role credentials have been set."
+    else
+        printf '%s\n' "${something_went_wrong}"
+        exit "${aws_role_session_credentials_exit_code}"
+    fi
+}
+
+get_aws_mfa_credentials(){
+    if [ -z "${aws_profile_name}" ]; then
+        printf '%s\n' "${profile_not_found}"
+        exit 127
+    fi
+
+    aws_session_epoch_expiry_date=$(aws configure get session_expiry_date --profile "${aws_profile_name}-mfa-session")
+
+    # shellcheck disable=SC2181
+    if [ "${?}" -gt '0' ] || [ "$(date +%s)" -ge "${aws_session_epoch_expiry_date:-'0'}" ]; then
+        generate_aws_mfa_session_credentials
+    else
+        printf '%s\n' "> Looking for valid MFA session credentials...";
+        printf '%s\n' "    Active credentials were found for the '${aws_profile_name}-mfa-session' profile";
+    fi
+}
+
+request_token_code(){
     if [ -z "${aws_token_code}" ]; then
         # Ask for the AWS MFA code
         stty -echo
@@ -145,49 +256,57 @@ else
             exit 127
         fi
     fi
+}
 
-    if [ -z "${aws_token_code}" ]; then
-        printf '%s\n' "> AWS MFA security code not found. Exiting..."
-        exit 127
-    fi
-
-    # Use the provided credentials to generate session credentials
-    printf '%s\n' "    Acquiring AWS session credentials: \"aws sts get-session-token --duration ${aws_session_duration} --serial-number ${aws_user_arn} --token-code ${aws_token_code}\"";
-    aws_user_session_credentials=$(\
-        aws sts get-session-token \
-        --duration "${aws_session_duration}" \
-        --serial-number "${aws_user_arn}" \
-        --token-code "${aws_token_code}" \
-        --output text \
-    )
-
-    export_aws_credentials "${aws_user_session_credentials}"
-    session_id=$(date +%s)
-
-    # Generate role session credentials
-    aws_role_session_credentials=$(\
-        aws sts assume-role \
-        --role-arn "${aws_role_arn}" \
-        --role-session-name "aws_mfa_session_${session_id}" \
-        --output text | \
-        grep "^CREDENTIALS"\
-    )
-
-    aws_assume_role_exit_code="${?}"
-
-    printf '%s\n' "${aws_role_session_credentials}" | tee "${aws_session_path}"/session-credentials >/dev/null 2>&1
-    
-    if [ -s "${aws_session_path}"/session-credentials ] && [ "${aws_assume_role_exit_code}" = '0' ]; then
-        printf '%s\n' "    The AWS session credentials have been updated and will be valid for 24 hours."
-    else
-        printf '%s\n' "    Something went wrong. Please check your credentials and try again."
-        exit 1
-    fi
+################################################################################
+# Ensure the local AWS directory existss
+################################################################################
+if [ -d "${aws_session_path}" ]; then
+    mkdir -p "${aws_session_path}"
 fi
 
-export_aws_credentials "${aws_role_session_credentials}"
+################################################################################
+# Generate credentials and/or run 'aws' commands within this script
+# Put credentials in '~/.aws/<config|credentials>'
+################################################################################
+if [ -n "${aws_profile_name}" ] && [ "${script_is_sourced}" = '0' ]; then
+    # Create an AWS MFA session
+    if [ -z "${aws_role_name}" ]; then
+        get_aws_mfa_credentials
 
-# Run 'aws' commands
-if [ -z "${aws_run_cli##*'aws'*}" ]; then
-    eval "${aws_run_cli}"
+    # Create an AWS MFA session AND create an 'assume-role' session
+    else
+        get_aws_mfa_credentials
+        generate_aws_role_session_credentials
+
+        # Run 'aws' commands
+        if [ -n "${aws_run_cli}" ]; then
+            aws_run_cli_test_str=$(echo "${aws_run_cli}" | sed "s/^\(aws\).*/\1/")
+
+            if test "${aws_run_cli_test_str}" = 'aws'; then
+                eval "${aws_run_cli}"
+            else
+                printf '%s\n' "> Invalid AWS CLI command. Exiting..."
+                exit 127
+            fi
+        fi
+    fi
+################################################################################
+# Export AWS credentials as environment variables when this script is sourced
+################################################################################
+elif [ -n "${aws_profile_name}" ] && [ "${script_is_sourced}" = '1' ]; then
+    if [ -n "${aws_role_arn}" ] || [ -n "${aws_role_name}" ]; then
+        get_aws_mfa_credentials
+        generate_aws_role_session_credentials
+
+        configure_aws_credentials "${aws_role_session_credentials}" "${aws_role_name}"
+
+        printf '%s\n' "> The AWS environment variables were sucessfully exported."
+    else
+        printf '%s\n' "${role_not_found}"
+        exit 127
+    fi
+else
+    printf '%s\n' "${profile_not_found}"
+    exit 127
 fi
