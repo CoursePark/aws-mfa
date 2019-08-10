@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/CoursePark/aws-mfa-session.svg?branch=master)](https://travis-ci.org/CoursePark/aws-mfa-session)
 [![NPM version](https://badge.fury.io/js/aws-mfa-session.svg)](http://badge.fury.io/js/aws-mfa-session)
 [![GitHub version](https://badge.fury.io/gh/CoursePark%2Faws-mfa-session.svg)](https://badge.fury.io/gh/CoursePark%2Faws-mfa-session)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 
 Generate MFA session credentials for `aws-cli`.
 
