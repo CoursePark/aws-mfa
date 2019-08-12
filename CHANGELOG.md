@@ -3,29 +3,45 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2.1.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/2.1.0) - 2019-08-12
+### Added
+- Add the `assume-role` flag for passing a role name
+- Add the `duration` flag for passing the MFA session duration
+- Add a `license` badge to `README` file
+- Add a check to see if the script was sourced
+- Add ability to generate multiple MFA and `assume-role` sessions
+
+### Changed
+- Create functions
+- Rename variables
+- Improve documentation formatting
+- Update the `usage` section of `README` file
+
+---
+
 ## [2.0.1](https://github.com/CoursePark/aws-mfa-session/releases/tag/2.0.1) - 2019-08-01
-## Changed
-- Refactor to make use of the 'export_aws_credentials' function
+### Changed
+- Refactor to make use of the `export_aws_credentials` function
 
 ### Fixed
-- Use command substitution to properly parse '$aws_session_expiry_date' (macOS)
+- Use command substitution to properly parse `$aws_session_expiry_date` (macOS)
 
 ---
 
 ## [2.0.0](https://github.com/CoursePark/aws-mfa-session/releases/tag/2.0.0) - 2019-07-24
 ### Added
-- Add the 'cli' flag for passing 'aws' commands
-- Add the 'profile' flag for passing a profile name
-- Add the 'role-arn' flag for passing the role ARN
-- Add the 'token-code' flag for passing an MFA token code
-- Fallback to credentials found in '/home/<USER>/.aws'
+- Add the `cli` flag for passing `aws` commands
+- Add the `profile` flag for passing a profile name
+- Add the `role-arn` flag for passing the role ARN
+- Add the `token-code` flag for passing an MFA token code
+- Fallback to credentials found in `/home/<USER>/.aws`
 
 ### Changed
 - Environment variable names
-- Update the 'usage' section of `README` file
+- Update the `usage` section of `README` file
 
 ### Fixed
-- Remove the '-r' flag from 'sed' command (macOS: illegal option)
+- Remove the `-r` flag from `sed` command (macOS: illegal option)
 - Fail if the exit code for the `assume-role` command is not equal to `0`
 
 ---
