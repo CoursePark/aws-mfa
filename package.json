@@ -1,6 +1,6 @@
 {
   "name": "aws-mfa-session",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Generate MFA session credentials for 'aws-cli'",
   "author": "Jared Abbott",
   "homepage": "https://github.com/CoursePark/aws-mfa-session#readme",
